@@ -19,7 +19,7 @@ using namespace std;
 
 int open_connection(char *ip, uint16_t port);
 void error(const char *msg);
-map<string, int> init_map();
+map<string, int> init_commands();
 map<string, string> init_paths();
 void send_to_server(int sockfd, string str_message);
 string receive_from_server(int sockfd);
@@ -28,5 +28,6 @@ vector<string> get_cookies(string response, int lines);
 int get_response_words(string response);
 string get_payload(string response);
 string compute_auth_header(string token);
+bool is_number(string s);
 
 #endif

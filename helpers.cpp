@@ -48,7 +48,7 @@ int open_connection(char *ip, uint16_t port) {
 }
 
 /* Initialize commands */
-map<string, int> init_map() {
+map<string, int> init_commands() {
     map<string, int> commands;
     commands["register"] = REGISTER_COMMAND;
     commands["login"] = LOGIN_COMMAND;
@@ -101,26 +101,56 @@ void send_to_server(int sockfd, string str_message) {
 /* Receive response from server */
 string receive_from_server(int sockfd) {
     string response;
-
     char buffer[BUFLEN];
+
     memset(buffer, 0, BUFLEN);
 
-    int bytes = read(sockfd, buffer, BUFLEN);
-    if (bytes < 0) {
-        error("ERROR reading message from socket");
-    }
+    size_t body = 0;
+    size_t read_bytes = 0;
 
-    response = buffer;
-
-    while (bytes > 0) {
-        memset(buffer, 0, BUFLEN);
-        bytes = read(sockfd, buffer, BUFLEN);
+    do {
+        int bytes = read(sockfd, buffer, BUFLEN);
         if (bytes < 0) {
-            error("ERROR reading message from socket");
+            error("ERROR reading response from socket");
         }
 
-        response += buffer;
-    }
+        read_bytes += bytes;
+
+        /* Find content length */
+        string str_buffer(buffer);
+        size_t pos = str_buffer.find("Content-Length: ");
+
+        /* Find header end */
+        size_t header_end = str_buffer.find("\r\n\r\n");
+
+        /* Check if there is a body */
+        if (pos != string::npos) {
+            /* Found a Content-Length header -> move pos to actual value */
+            pos += 16;
+            string content_length = str_buffer.substr(pos, header_end - pos);
+            /* Convert to int */
+            body = stoi(content_length);
+        }
+
+        /* Check if there is a body */
+        if (body != 0) {
+            /* Check if we have read the entire body */
+            if (read_bytes - header_end - 4 == body) {
+                /* We have read the entire body */
+                response.append(buffer, bytes);
+                break;
+            }
+        } else {
+            /* We don't have a body */
+            if (header_end != string::npos) {
+                /* We have read the entire header */
+                response.append(buffer, bytes);
+                break;
+            }
+        }
+
+        response.append(buffer, bytes);
+    } while (1);
 
     return response;
 }
@@ -201,4 +231,15 @@ string compute_auth_header(string token) {
     string auth_header = "Authorization: Bearer " + token;
 
     return auth_header;
+}
+
+/* Check if string is number */
+bool is_number(string s) {
+    for (size_t i = 0; i < s.length(); i++) {
+        if (!isdigit(s[i])) {
+            return false;
+        }
+    }
+
+    return true;
 }
