@@ -156,10 +156,24 @@ int register_user(string host, char* ip, int port, string session_cookie, map<st
         return -1;
     }
 
-    cout << "username= ";
+    cout << "username=";
     getline(cin, username);
-    cout << "password= ";
+    cout << "password=";
     getline(cin, password);
+
+    /* Verify for no spaces */
+    bool has_spaces = false;
+    has_spaces = username.find(' ') != string::npos;
+    if (has_spaces) {
+        cout << "Invalid username - no spaces allowed!" << endl;
+        return -1;
+    }
+
+    has_spaces = password.find(' ') != string::npos;
+    if (has_spaces) {
+        cout << "Invalid password - no spaces allowed!" << endl;
+        return -1;
+    }
 
     /* Create credentials json */
     payload = get_credentials_json(username, password);
@@ -182,7 +196,7 @@ int register_user(string host, char* ip, int port, string session_cookie, map<st
     int response_code = get_response_code(response);
 
     /* Check response code */
-    if (response_code / 100 == 4) {
+    if (response_code / 100 == 4 || response_code / 100 == 5) {
         cout << "Error " << response_code << " - Register failed!" << endl;
         return -1;
     }
@@ -210,6 +224,20 @@ string login(string host, char* ip, int port, string session_cookie, map<string,
     cout << "password=";
     getline(cin, password);
 
+    /* Verify for no spaces */
+    bool has_spaces = false;
+    has_spaces = username.find(' ') != string::npos;
+    if (has_spaces) {
+        cout << "Invalid username - no spaces allowed!" << endl;
+        return "";
+    }
+
+    has_spaces = password.find(' ') != string::npos;
+    if (has_spaces) {
+        cout << "Invalid password - no spaces allowed!" << endl;
+        return "";
+    }
+
     payload = get_credentials_json(username, password);
 
     vector<string> empty_str_vector;
@@ -230,7 +258,7 @@ string login(string host, char* ip, int port, string session_cookie, map<string,
     int response_code = get_response_code(response);
 
     /* Check response code */
-    if (response_code / 100 == 4) {
+    if (response_code / 100 == 4 || response_code / 100 == 5) {
         string payload = get_payload(response);
 
         if (payload.size() == 0) {
@@ -297,7 +325,7 @@ string enter_library(string host, char* ip, int port, string session_cookie, map
     int response_code = get_response_code(response);
 
     /* Check response code */
-    if (response_code / 100 == 4) {
+    if (response_code / 100 == 4 || response_code / 100 == 5) {
         cout << "Error " << response_code << " - Not logged in!" << endl;
         return "";
     }
@@ -355,8 +383,15 @@ int get_books(string host, char* ip, int port, string session_cookie, string tok
     int response_code = get_response_code(response);
 
     /* Check response code */
-    if (response_code / 100 == 4) {
-        cout << "Error " << response_code << " - Not logged in!" << endl;
+    if (response_code / 100 == 4 || response_code / 100 == 5) {
+        /* Get payload */
+        string payload = get_payload(response);
+
+        /* Parse payload */
+        json payload_json = json::parse(payload);
+        string error_message = payload_json["error"];
+
+        cout << "Error " << response_code << " - " << error_message << endl;
         return -1;
     }
 
@@ -365,6 +400,12 @@ int get_books(string host, char* ip, int port, string session_cookie, string tok
 
     /* Parse payload */
     json payload_json = json::parse(payload);
+
+    /* Check for size - error output if book array is emtpty */
+    if (payload_json.size() == 0) {
+        cout << "No books in library!" << endl;
+        return -1;
+    }
 
     /* Print books */
     cout << "Books:" << endl;
@@ -398,7 +439,7 @@ int get_book(string host, char* ip, int port, string session_cookie, string toke
 
     /* Check if book id is a number */
     if (!is_number(book_id)) {
-        cout << "Book id must be a number!" << endl;
+        cout << "Book ID invalid - should be a number!" << endl;
         return -1;
     }
 
@@ -422,7 +463,7 @@ int get_book(string host, char* ip, int port, string session_cookie, string toke
     int response_code = get_response_code(response);
 
     /* Check response code */
-    if (response_code / 100 == 4) {
+    if (response_code / 100 == 4 || response_code / 100 == 5) {
         /* Get payload */
         string payload = get_payload(response);
 
@@ -480,7 +521,7 @@ int add_book(string host, char* ip, int port, string session_cookie, string toke
 
     /* Check if page count is a number */
     if (!is_number(page_count)) {
-        cout << "Page count must be a number!" << endl;
+        cout << "Page count invalid - should be a number!" << endl;
         return -1;
     }
 
@@ -512,7 +553,7 @@ int add_book(string host, char* ip, int port, string session_cookie, string toke
     int response_code = get_response_code(response);
 
     /* Check response code */
-    if (response_code / 100 == 4) {
+    if (response_code / 100 == 4 || response_code / 100 == 5) {
         /* Get payload */
         string payload = get_payload(response);
 
@@ -553,7 +594,7 @@ int delete_book(string host, char* ip, uint16_t port, string session_cookie, str
 
     /* Check if book id is a number */
     if (!is_number(book_id)) {
-        cout << "Book id must be a number!" << endl;
+        cout << "Book ID invalid - should be a number!" << endl;
         return -1;
     }
 
@@ -577,7 +618,7 @@ int delete_book(string host, char* ip, uint16_t port, string session_cookie, str
     int response_code = get_response_code(response);
 
     /* Check response code */
-    if (response_code / 100 == 4) {
+    if (response_code / 100 == 4 || response_code / 100 == 5) {
         /* Get payload */
         string payload = get_payload(response);
 
@@ -626,7 +667,7 @@ int logout(string host, char* ip, int port, string session_cookie, map<string, s
     int response_code = get_response_code(response);
 
     /* Check response code */
-    if (response_code / 100 == 4) {
+    if (response_code / 100 == 4 || response_code / 100 == 5) {
         cout << "Error " << response_code << " - Not logged in!" << endl;
         return 1;
     }

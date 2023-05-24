@@ -23,7 +23,7 @@ In order to be more readable and flexible, we use a map to store the
 commands and their corresponding 'names'. This way, we can easily add
 new commands. We also use a map to store the URLs for the commands.
 
-The basic flow of the program is:
+The flow of the program is:
 
 - init map with commands and URLs
 - init socket
@@ -82,13 +82,16 @@ make run
 
 ## Comments and Observations
 
-- We open and close the connection for every command, because the server
+- The connection is opened and closed for every command, because the server
 disconnects us after a certain amount of time
 
-- We use a stringstream to parse the response from the server
+- stringstream is used to parse the response from the server
 
-- We use the nlohmann json library to parse the JSON response from the
+- The nlohmann json library is used to parse the JSON response from the
 server and to create the JSON request to the server, because it is
 easier to use and offers more readability and flexibility to the code
 
 ## Conclusion
+
+The project helped me understand how a REST API works and how to
+implement a client for it in C++.
